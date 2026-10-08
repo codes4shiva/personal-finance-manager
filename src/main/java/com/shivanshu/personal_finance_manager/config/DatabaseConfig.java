@@ -9,9 +9,10 @@ import org.springframework.stereotype.Component;
 
 /**
  * Configuration post-processor for HikariDataSource.
- * Ensures PostgreSQL connections via transaction poolers (e.g., Supabase / PgBouncer)
- * do not encounter prepared statement collisions (e.g., "ERROR: prepared statement 'S_1' already exists")
- * by disabling driver-level prepared statement caching (prepareThreshold = 0).
+ * Ensures PostgreSQL connections:
+ * 1. Normalize connection URLs (e.g., converting postgres:// to jdbc:postgresql://).
+ * 2. Enforce sslmode=require and ssl=true to prevent SSLHandshakeException with cloud DBs (Supabase, Render, Neon).
+ * 3. Disable driver-level prepared statement caching (prepareThreshold = 0) for pooler compatibility.
  */
 @Component
 public class DatabaseConfig implements BeanPostProcessor {
@@ -22,11 +23,65 @@ public class DatabaseConfig implements BeanPostProcessor {
     public Object postProcessBeforeInitialization(Object bean, String beanName) throws BeansException {
         if (bean instanceof HikariDataSource hikari) {
             String jdbcUrl = hikari.getJdbcUrl();
-            if (jdbcUrl != null && jdbcUrl.contains("postgresql")) {
-                hikari.addDataSourceProperty("prepareThreshold", "0");
-                log.info("Configured prepareThreshold=0 on HikariDataSource for PostgreSQL pooler compatibility");
+            if (jdbcUrl != null) {
+                String normalizedUrl = jdbcUrl.trim();
+
+                // Convert standard URI schemes (postgres:// or postgresql://) to JDBC format
+                if (normalizedUrl.startsWith("postgres://")) {
+                    normalizedUrl = "jdbc:postgresql://" + normalizedUrl.substring("postgres://".length());
+                } else if (normalizedUrl.startsWith("postgresql://")) {
+                    normalizedUrl = "jdbc:postgresql://" + normalizedUrl.substring("postgresql://".length());
+                }
+
+                if (normalizedUrl.contains("postgresql")) {
+                    // Extract credentials if embedded in URI: jdbc:postgresql://user:password@host...
+                    normalizedUrl = sanitizeAndExtractCredentials(normalizedUrl, hikari);
+
+                    // Automatically enforce sslmode=require if missing
+                    if (!normalizedUrl.contains("sslmode")) {
+                        String separator = normalizedUrl.contains("?") ? "&" : "?";
+                        normalizedUrl = normalizedUrl + separator + "sslmode=require";
+                    }
+
+                    hikari.setJdbcUrl(normalizedUrl);
+                    hikari.addDataSourceProperty("prepareThreshold", "0");
+                    hikari.addDataSourceProperty("sslmode", "require");
+                    hikari.addDataSourceProperty("ssl", "true");
+
+                    log.info("Configured HikariDataSource with sslmode=require and prepareThreshold=0 for PostgreSQL");
+                }
             }
         }
         return bean;
+    }
+
+    private String sanitizeAndExtractCredentials(String url, HikariDataSource hikari) {
+        try {
+            String prefix = "jdbc:postgresql://";
+            if (url.startsWith(prefix) && url.contains("@")) {
+                String withoutPrefix = url.substring(prefix.length());
+                int atIndex = withoutPrefix.indexOf('@');
+                String userInfo = withoutPrefix.substring(0, atIndex);
+                String rest = withoutPrefix.substring(atIndex + 1);
+
+                if (userInfo.contains(":")) {
+                    String[] parts = userInfo.split(":", 2);
+                    if (hikari.getUsername() == null || "sa".equals(hikari.getUsername())) {
+                        hikari.setUsername(parts[0]);
+                    }
+                    if (hikari.getPassword() == null || hikari.getPassword().isEmpty()) {
+                        hikari.setPassword(parts[1]);
+                    }
+                } else {
+                    if (hikari.getUsername() == null || "sa".equals(hikari.getUsername())) {
+                        hikari.setUsername(userInfo);
+                    }
+                }
+                return prefix + rest;
+            }
+        } catch (Exception ex) {
+            log.warn("Could not parse embedded credentials from JDBC URL: {}", ex.getMessage());
+        }
+        return url;
     }
 }

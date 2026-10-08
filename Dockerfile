@@ -16,6 +16,9 @@ FROM eclipse-temurin:21-jre-alpine
 
 WORKDIR /app
 
+# Ensure up-to-date CA root certificates for SSL/TLS connections
+RUN apk add --no-cache ca-certificates
+
 # Create non-root system userEntity
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 
