@@ -1,0 +1,16 @@
+target/
+.git/
+.gitignore
+.dockerignore
+.env
+.env.*
+*.md
+!README.md
+.idea/
+.vscode/
+*.iml
+*.iws
+*.ipr
+.settings/
+.classpath
+.project

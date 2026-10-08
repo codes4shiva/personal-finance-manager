@@ -147,11 +147,85 @@ class TransactionApiTest {
     }
 
     @Test
-    @DisplayName("Error path: malformed query parameter returns 400 Bad Request")
-    void testGetTransactionsMalformedDate() throws Exception {
-        mockMvc.perform(get("/api/transactions")
-                        .cookie(userACookie)
-                        .param("startDate", "invalid-date"))
+    @DisplayName("Transaction query filters: none, startDate only, endDate only, categoryId only, all combined, and user isolation")
+    void testTransactionQueryFilterCombinations() throws Exception {
+        // Find food category id from GET /api/categories
+        MvcResult catResult = mockMvc.perform(get("/api/categories").cookie(userACookie))
+                .andExpect(status().isOk())
+                .andReturn();
+        JsonNode cats = objectMapper.readTree(catResult.getResponse().getContentAsString()).get("categories");
+        // We know Food and Salary exist as default categories
+        CreateTransactionRequest t1 = new CreateTransactionRequest(
+                new BigDecimal("100.00"), LocalDate.of(2024, 2, 10), "Food", "Dinner"
+        );
+        CreateTransactionRequest t2 = new CreateTransactionRequest(
+                new BigDecimal("200.00"), LocalDate.of(2024, 2, 20), "Food", "Lunch"
+        );
+        CreateTransactionRequest t3 = new CreateTransactionRequest(
+                new BigDecimal("5000.00"), LocalDate.of(2024, 2, 25), "Salary", "Bonus"
+        );
+        // Create user B transaction (must never appear for user A)
+        CreateTransactionRequest tUserB = new CreateTransactionRequest(
+                new BigDecimal("999.00"), LocalDate.of(2024, 2, 15), "Food", "User B Food"
+        );
+
+        mockMvc.perform(post("/api/transactions").cookie(userACookie)
+                .contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(t1))).andExpect(status().isCreated());
+        mockMvc.perform(post("/api/transactions").cookie(userACookie)
+                .contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(t2))).andExpect(status().isCreated());
+        mockMvc.perform(post("/api/transactions").cookie(userACookie)
+                .contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(t3))).andExpect(status().isCreated());
+        mockMvc.perform(post("/api/transactions").cookie(userBCookie)
+                .contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(tUserB))).andExpect(status().isCreated());
+
+        // 1. None (all transactions of user A)
+        mockMvc.perform(get("/api/transactions").cookie(userACookie))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.transactions", hasSize(3)))
+                .andExpect(jsonPath("$.transactions[*].description", not(hasItem("User B Food"))));
+
+        // 2. startDate only
+        mockMvc.perform(get("/api/transactions").cookie(userACookie)
+                        .param("startDate", "2024-02-20"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.transactions", hasSize(2)))
+                .andExpect(jsonPath("$.transactions[*].description", not(hasItem("Dinner"))));
+
+        // 3. endDate only
+        mockMvc.perform(get("/api/transactions").cookie(userACookie)
+                        .param("endDate", "2024-02-15"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.transactions", hasSize(1)))
+                .andExpect(jsonPath("$.transactions[0].description").value("Dinner"));
+
+        // 4. category filter
+        mockMvc.perform(get("/api/transactions").cookie(userACookie)
+                        .param("category", "Food"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.transactions", hasSize(2)))
+                .andExpect(jsonPath("$.transactions[*].category", everyItem(is("Food"))));
+
+        // 5. All combined: startDate, endDate, category, type
+        mockMvc.perform(get("/api/transactions").cookie(userACookie)
+                        .param("startDate", "2024-02-01")
+                        .param("endDate", "2024-02-28")
+                        .param("category", "Salary")
+                        .param("type", "INCOME"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.transactions", hasSize(1)))
+                .andExpect(jsonPath("$.transactions[0].description").value("Bonus"));
+
+        // 6. Non-numeric categoryId -> 400
+        mockMvc.perform(get("/api/transactions").cookie(userACookie)
+                        .param("categoryId", "non-numeric"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.message", containsString("categoryId")));
+
+        // 7. startDate after endDate -> 400
+        mockMvc.perform(get("/api/transactions").cookie(userACookie)
+                        .param("startDate", "2024-03-01")
+                        .param("endDate", "2024-02-01"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status").value(400));
     }
@@ -202,3 +276,4 @@ class TransactionApiTest {
                 .andExpect(jsonPath("$.status").value(404));
     }
 }
+
