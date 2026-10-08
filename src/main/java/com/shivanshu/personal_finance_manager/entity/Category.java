@@ -25,16 +25,16 @@ public class Category {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
-    private User user;
+    private UserEntity userEntity;
 
     public Category() {
     }
 
-    public Category(String name, CategoryType type, boolean custom, User user) {
+    public Category(String name, CategoryType type, boolean custom, UserEntity userEntity) {
         this.name = name;
         this.type = type;
         this.custom = custom;
-        this.user = user;
+        this.userEntity = userEntity;
     }
 
     public Long getId() {
@@ -69,11 +69,11 @@ public class Category {
         this.custom = custom;
     }
 
-    public User getUser() {
-        return user;
+    public UserEntity getUser() {
+        return userEntity;
     }
 
-    public void setUser(User user) {
-        this.user = user;
+    public void setUser(UserEntity userEntity) {
+        this.userEntity = userEntity;
     }
 }

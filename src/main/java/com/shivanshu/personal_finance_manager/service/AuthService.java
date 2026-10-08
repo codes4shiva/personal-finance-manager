@@ -24,5 +24,5 @@ public interface AuthService {
      * @param request The login credentials
      * @return Validated Authentication instance
      */
-    Authentication authenticate(LoginRequest request);
+    String[] authenticate(LoginRequest request);
 }

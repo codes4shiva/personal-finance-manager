@@ -19,14 +19,14 @@ public interface SavingsGoalRepository extends JpaRepository<SavingsGoal, Long> 
      * @param userId User ID
      * @return List of savings goals
      */
-    List<SavingsGoal> findByUserIdOrderByIdAsc(Long userId);
+    List<SavingsGoal> findByUserEntityIdOrderByIdAsc(Long userId);
 
     /**
      * Finds a savings goal by its ID and owning user ID.
      *
-     * @param id     Goal ID
+     * @param id Goal ID
      * @param userId User ID
      * @return Optional SavingsGoal
      */
-    Optional<SavingsGoal> findByIdAndUserId(Long id, Long userId);
+    Optional<SavingsGoal> findByIdAndUserEntityId(Long id, Long userId);
 }

@@ -4,10 +4,7 @@ import com.shivanshu.personal_finance_manager.dto.request.CreateTransactionReque
 import com.shivanshu.personal_finance_manager.dto.request.UpdateTransactionRequest;
 import com.shivanshu.personal_finance_manager.dto.response.TransactionListResponse;
 import com.shivanshu.personal_finance_manager.dto.response.TransactionResponse;
-import com.shivanshu.personal_finance_manager.entity.Category;
-import com.shivanshu.personal_finance_manager.entity.CategoryType;
-import com.shivanshu.personal_finance_manager.entity.Transaction;
-import com.shivanshu.personal_finance_manager.entity.User;
+import com.shivanshu.personal_finance_manager.entity.*;
 import com.shivanshu.personal_finance_manager.exception.ApiException;
 import com.shivanshu.personal_finance_manager.mapper.TransactionMapper;
 import com.shivanshu.personal_finance_manager.repository.CategoryRepository;
@@ -55,12 +52,12 @@ public class TransactionServiceImpl implements TransactionService {
 
     @Override
     public TransactionResponse createTransaction(CreateTransactionRequest request) {
-        User user = currentUserProvider.getCurrentUserEntity();
-        Category category = categoryRepository.findAccessibleByName(user.getId(), request.category().trim())
+        UserEntity userEntity = currentUserProvider.getCurrentUserEntity();
+        Category category = categoryRepository.findAccessibleByName(userEntity.getId(), request.category().trim())
                 .orElseThrow(() -> ApiException.badRequest("Category '" + request.category() + "' not found"));
 
         Transaction transaction = new Transaction(
-                user,
+                userEntity,
                 category,
                 MoneyUtils.scale(request.amount()),
                 request.date(),
@@ -110,7 +107,7 @@ public class TransactionServiceImpl implements TransactionService {
     @Override
     public TransactionResponse updateTransaction(Long id, UpdateTransactionRequest request) {
         Long userId = currentUserProvider.getCurrentUserId();
-        Transaction transaction = transactionRepository.findByIdAndUserId(id, userId)
+        Transaction transaction = transactionRepository.findByIdAndUserEntityId(id, userId)
                 .orElseThrow(() -> ApiException.notFound("Transaction not found"));
 
         if (request.date() != null && !request.date().equals(transaction.getTransactionDate())) {
@@ -141,7 +138,7 @@ public class TransactionServiceImpl implements TransactionService {
     @Override
     public void deleteTransaction(Long id) {
         Long userId = currentUserProvider.getCurrentUserId();
-        Transaction transaction = transactionRepository.findByIdAndUserId(id, userId)
+        Transaction transaction = transactionRepository.findByIdAndUserEntityId(id, userId)
                 .orElseThrow(() -> ApiException.notFound("Transaction not found"));
 
         transactionRepository.delete(transaction);

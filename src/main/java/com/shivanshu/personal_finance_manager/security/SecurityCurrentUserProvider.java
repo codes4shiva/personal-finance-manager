@@ -1,6 +1,6 @@
 package com.shivanshu.personal_finance_manager.security;
 
-import com.shivanshu.personal_finance_manager.entity.User;
+import com.shivanshu.personal_finance_manager.entity.UserEntity;
 import com.shivanshu.personal_finance_manager.exception.ApiException;
 import com.shivanshu.personal_finance_manager.repository.UserRepository;
 import org.springframework.security.core.Authentication;
@@ -36,7 +36,7 @@ public class SecurityCurrentUserProvider implements CurrentUserProvider {
     }
 
     @Override
-    public User getCurrentUserEntity() {
+    public UserEntity getCurrentUserEntity() {
         Long userId = getCurrentUserId();
         return userRepository.findById(userId)
                 .orElseThrow(() -> ApiException.unauthorized("User not found"));

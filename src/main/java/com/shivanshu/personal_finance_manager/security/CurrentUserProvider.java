@@ -1,6 +1,6 @@
 package com.shivanshu.personal_finance_manager.security;
 
-import com.shivanshu.personal_finance_manager.entity.User;
+import com.shivanshu.personal_finance_manager.entity.UserEntity;
 
 /**
  * Interface abstracting retrieval of the currently authenticated user.
@@ -26,5 +26,5 @@ public interface CurrentUserProvider {
      *
      * @return User entity
      */
-    User getCurrentUserEntity();
+    UserEntity getCurrentUserEntity();
 }

@@ -24,7 +24,7 @@ public class Transaction {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+    private UserEntity userEntity;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "category_id", nullable = false)
@@ -42,8 +42,8 @@ public class Transaction {
     public Transaction() {
     }
 
-    public Transaction(User user, Category category, BigDecimal amount, LocalDate transactionDate, String description) {
-        this.user = user;
+    public Transaction(UserEntity userEntity, Category category, BigDecimal amount, LocalDate transactionDate, String description) {
+        this.userEntity = userEntity;
         this.category = category;
         this.amount = amount;
         this.transactionDate = transactionDate;
@@ -58,12 +58,12 @@ public class Transaction {
         this.id = id;
     }
 
-    public User getUser() {
-        return user;
+    public UserEntity getUser() {
+        return userEntity;
     }
 
-    public void setUser(User user) {
-        this.user = user;
+    public void setUser(UserEntity userEntity) {
+        this.userEntity = userEntity;
     }
 
     public Category getCategory() {

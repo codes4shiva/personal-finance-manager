@@ -18,7 +18,7 @@ public class SavingsGoal {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+    private UserEntity userEntity;
 
     @Column(name = "goal_name", nullable = false)
     private String goalName;
@@ -35,8 +35,8 @@ public class SavingsGoal {
     public SavingsGoal() {
     }
 
-    public SavingsGoal(User user, String goalName, BigDecimal targetAmount, LocalDate targetDate, LocalDate startDate) {
-        this.user = user;
+    public SavingsGoal(UserEntity userEntity, String goalName, BigDecimal targetAmount, LocalDate targetDate, LocalDate startDate) {
+        this.userEntity = userEntity;
         this.goalName = goalName;
         this.targetAmount = targetAmount;
         this.targetDate = targetDate;
@@ -51,12 +51,12 @@ public class SavingsGoal {
         this.id = id;
     }
 
-    public User getUser() {
-        return user;
+    public UserEntity getUser() {
+        return userEntity;
     }
 
-    public void setUser(User user) {
-        this.user = user;
+    public void setUser(UserEntity userEntity) {
+        this.userEntity = userEntity;
     }
 
     public String getGoalName() {

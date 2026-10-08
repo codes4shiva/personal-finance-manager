@@ -1,12 +1,17 @@
 package com.shivanshu.personal_finance_manager.service.impl;
 
+import com.shivanshu.personal_finance_manager.dto.UserDTO;
 import com.shivanshu.personal_finance_manager.dto.request.LoginRequest;
 import com.shivanshu.personal_finance_manager.dto.request.RegisterRequest;
 import com.shivanshu.personal_finance_manager.dto.response.RegisterResponse;
-import com.shivanshu.personal_finance_manager.entity.User;
+import com.shivanshu.personal_finance_manager.entity.UserEntity;
+import com.shivanshu.personal_finance_manager.entity.UserPrincipal;
 import com.shivanshu.personal_finance_manager.exception.ApiException;
 import com.shivanshu.personal_finance_manager.repository.UserRepository;
+import com.shivanshu.personal_finance_manager.security.AppUserDetails;
+import com.shivanshu.personal_finance_manager.security.JwtService;
 import com.shivanshu.personal_finance_manager.service.AuthService;
+import lombok.AllArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -20,21 +25,13 @@ import org.springframework.transaction.annotation.Transactional;
  * and authentication without touching HTTP or SecurityContext APIs directly.
  */
 @Service
+@AllArgsConstructor
 public class AuthServiceImpl implements AuthService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
-
-    public AuthServiceImpl(
-            UserRepository userRepository,
-            PasswordEncoder passwordEncoder,
-            AuthenticationManager authenticationManager
-    ) {
-        this.userRepository = userRepository;
-        this.passwordEncoder = passwordEncoder;
-        this.authenticationManager = authenticationManager;
-    }
+    private final JwtService jwtService;
 
     @Override
     @Transactional
@@ -44,32 +41,54 @@ public class AuthServiceImpl implements AuthService {
             throw ApiException.conflict("Username already exists");
         }
 
-        User user = new User(
+        UserEntity userEntity = new UserEntity(
                 normalizedEmail,
                 passwordEncoder.encode(request.password()),
                 request.fullName().trim(),
                 request.phoneNumber().trim()
         );
-        User savedUser = userRepository.save(user);
+        UserEntity savedUserEntity = userRepository.save(userEntity);
 
-        return new RegisterResponse("User registered successfully", savedUser.getId());
+        return new RegisterResponse("User registered successfully", savedUserEntity.getId());
     }
 
-    @Override
-    @Transactional(readOnly = true)
-    public Authentication authenticate(LoginRequest request) {
-        if (request.username() == null || request.username().isBlank()
-                || request.password() == null || request.password().isBlank()) {
-            throw ApiException.unauthorized("Invalid username or password");
-        }
+//    @Override
+//    @Transactional(readOnly = true)
+//    public Authentication authenticate(LoginRequest request) {
+//        if (request.getUsername() == null || request.getUsername().isBlank()
+//                || request.getPassword() == null || request.getPassword().isBlank()) {
+//            throw ApiException.unauthorized("Invalid username or password");
+//        }
+//
+//        String normalizedEmail = request.getUsername().trim().toLowerCase();
+//        try {
+//            return authenticationManager.authenticate(
+//                    new UsernamePasswordAuthenticationToken(normalizedEmail, request.getPassword())
+//            );
+//        } catch (AuthenticationException ex) {
+//            throw ApiException.unauthorized("Invalid username or password");
+//        }
+//    }
 
-        String normalizedEmail = request.username().trim().toLowerCase();
-        try {
-            return authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(normalizedEmail, request.password())
-            );
-        } catch (AuthenticationException ex) {
-            throw ApiException.unauthorized("Invalid username or password");
-        }
+    public String[] authenticate(LoginRequest loginRequestDTO) {
+
+        Authentication authentication =
+                authenticationManager.authenticate(
+                        new UsernamePasswordAuthenticationToken(
+                                loginRequestDTO.getUsername(),
+                                loginRequestDTO.getPassword()
+                        )
+                );
+
+        AppUserDetails userDetails =
+                (AppUserDetails) authentication.getPrincipal();
+
+        UserEntity user = userDetails.getUserEntity();
+
+        String[] token = new String[2];
+        token[0] = jwtService.generateAccessToken(user.getUsername());
+        token[1] = jwtService.generateRefreshToken(user.getUsername());
+
+        return token;
     }
 }

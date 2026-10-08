@@ -1,13 +1,13 @@
 package com.shivanshu.personal_finance_manager.dto.request;
 
-/**
- * Request payload for user login.
- *
- * @param username User email address
- * @param password Raw password
- */
-public record LoginRequest(
-        String username,
-        String password
-) {
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+public class LoginRequest{
+    private String username;
+    private String password;
 }

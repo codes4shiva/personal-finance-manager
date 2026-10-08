@@ -1,6 +1,6 @@
 package com.shivanshu.personal_finance_manager.security;
 
-import com.shivanshu.personal_finance_manager.entity.User;
+import com.shivanshu.personal_finance_manager.entity.UserEntity;
 import com.shivanshu.personal_finance_manager.repository.UserRepository;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -21,8 +21,8 @@ public class AppUserDetailsService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        User user = userRepository.findByUsernameIgnoreCase(username)
+        UserEntity userEntity = userRepository.findByUsernameIgnoreCase(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
-        return new AppUserDetails(user.getId(), user.getUsername(), user.getPassword());
+        return new AppUserDetails(userEntity);
     }
 }

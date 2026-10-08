@@ -5,7 +5,7 @@ import com.shivanshu.personal_finance_manager.dto.request.UpdateGoalRequest;
 import com.shivanshu.personal_finance_manager.dto.response.GoalListResponse;
 import com.shivanshu.personal_finance_manager.dto.response.GoalResponse;
 import com.shivanshu.personal_finance_manager.entity.SavingsGoal;
-import com.shivanshu.personal_finance_manager.entity.User;
+import com.shivanshu.personal_finance_manager.entity.UserEntity;
 import com.shivanshu.personal_finance_manager.exception.ApiException;
 import com.shivanshu.personal_finance_manager.mapper.GoalMapper;
 import com.shivanshu.personal_finance_manager.repository.SavingsGoalRepository;
@@ -62,9 +62,9 @@ public class GoalServiceImpl implements GoalService {
             throw ApiException.badRequest("startDate cannot be after targetDate");
         }
 
-        User user = currentUserProvider.getCurrentUserEntity();
+        UserEntity userEntity = currentUserProvider.getCurrentUserEntity();
         SavingsGoal goal = new SavingsGoal(
-                user,
+                userEntity,
                 request.goalName().trim(),
                 MoneyUtils.scale(request.targetAmount()),
                 request.targetDate(),
@@ -80,7 +80,7 @@ public class GoalServiceImpl implements GoalService {
     @Transactional(readOnly = true)
     public GoalListResponse getGoals() {
         Long userId = currentUserProvider.getCurrentUserId();
-        List<SavingsGoal> goals = savingsGoalRepository.findByUserIdOrderByIdAsc(userId);
+        List<SavingsGoal> goals = savingsGoalRepository.findByUserEntityIdOrderByIdAsc(userId);
 
         List<GoalResponse> responses = goals.stream()
                 .map(goal -> {

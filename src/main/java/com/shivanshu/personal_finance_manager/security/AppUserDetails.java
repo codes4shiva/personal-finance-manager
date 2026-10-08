@@ -1,5 +1,6 @@
 package com.shivanshu.personal_finance_manager.security;
 
+import com.shivanshu.personal_finance_manager.entity.UserEntity;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -17,11 +18,20 @@ public class AppUserDetails implements UserDetails {
     private final String password;
     private final Collection<? extends GrantedAuthority> authorities;
 
-    public AppUserDetails(Long id, String username, String password) {
-        this.id = id;
-        this.username = username;
-        this.password = password;
-        this.authorities = Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER"));
+    private final UserEntity user;
+
+    public AppUserDetails(UserEntity user) {
+        this.user = user;
+        this.id = user.getId();
+        this.username = user.getUsername();
+        this.password = user.getPassword();
+        this.authorities = Collections.singletonList(
+                new SimpleGrantedAuthority("ROLE_USER")
+        );
+    }
+
+    public UserEntity getUserEntity() {
+        return user;
     }
 
     public Long getId() {

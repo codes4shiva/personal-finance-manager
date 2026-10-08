@@ -4,7 +4,7 @@ import com.shivanshu.personal_finance_manager.dto.request.CreateCategoryRequest;
 import com.shivanshu.personal_finance_manager.dto.response.CategoryListResponse;
 import com.shivanshu.personal_finance_manager.dto.response.CategoryResponse;
 import com.shivanshu.personal_finance_manager.entity.Category;
-import com.shivanshu.personal_finance_manager.entity.User;
+import com.shivanshu.personal_finance_manager.entity.UserEntity;
 import com.shivanshu.personal_finance_manager.exception.ApiException;
 import com.shivanshu.personal_finance_manager.mapper.CategoryMapper;
 import com.shivanshu.personal_finance_manager.repository.CategoryRepository;
@@ -61,8 +61,8 @@ public class CategoryServiceImpl implements CategoryService {
             throw ApiException.conflict("Category with name '" + trimmedName + "' already exists");
         }
 
-        User user = currentUserProvider.getCurrentUserEntity();
-        Category category = new Category(trimmedName, request.type(), true, user);
+        UserEntity userEntity = currentUserProvider.getCurrentUserEntity();
+        Category category = new Category(trimmedName, request.type(), true, userEntity);
         Category saved = categoryRepository.save(category);
 
         return categoryMapper.toResponse(saved);
