@@ -23,6 +23,6 @@ class MoneyUtilsTest {
         assertEquals(new BigDecimal("123.46"), result);
 
         BigDecimal roundedDown = MoneyUtils.scale(new BigDecimal("123.454"));
-        assertEquals(new BigDecimal("123.45"), result);
+        assertEquals(new BigDecimal("123.45"), roundedDown);
     }
 }
