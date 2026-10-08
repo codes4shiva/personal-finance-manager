@@ -60,7 +60,7 @@ public class DatabaseConfig implements BeanPostProcessor {
             String prefix = "jdbc:postgresql://";
             if (url.startsWith(prefix) && url.contains("@")) {
                 String withoutPrefix = url.substring(prefix.length());
-                int atIndex = withoutPrefix.indexOf('@');
+                int atIndex = withoutPrefix.lastIndexOf('@');
                 String userInfo = withoutPrefix.substring(0, atIndex);
                 String rest = withoutPrefix.substring(atIndex + 1);
 

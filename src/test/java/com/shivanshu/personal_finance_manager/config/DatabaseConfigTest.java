@@ -49,6 +49,25 @@ class DatabaseConfigTest {
     }
 
     @Test
+    @DisplayName("Handles embedded credentials where password contains @ and special chars")
+    void testUriSchemeWithSpecialCharsInPassword() {
+        HikariDataSource ds = new HikariDataSource();
+        ds.setJdbcUrl("postgres://postgres.dzvouk:Rootshiv123@#@aws-0.pooler.supabase.com:6543/postgres");
+        ds.setUsername("sa");
+
+        databaseConfig.postProcessBeforeInitialization(ds, "dataSource");
+
+        assertEquals(
+                "jdbc:postgresql://aws-0.pooler.supabase.com:6543/postgres?sslmode=require",
+                ds.getJdbcUrl()
+        );
+        assertEquals("postgres.dzvouk", ds.getUsername());
+        assertEquals("Rootshiv123@#", ds.getPassword());
+
+        ds.close();
+    }
+
+    @Test
     @DisplayName("Leaves H2 and other non-PostgreSQL datasources intact")
     void testNonPostgresIgnored() {
         HikariDataSource ds = new HikariDataSource();
