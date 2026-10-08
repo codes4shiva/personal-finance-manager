@@ -46,13 +46,20 @@ public class DatabaseConfig implements BeanPostProcessor {
                     hikari.setJdbcUrl(normalizedUrl);
                     hikari.addDataSourceProperty("prepareThreshold", "0");
                     hikari.addDataSourceProperty("sslmode", "require");
-                    hikari.addDataSourceProperty("ssl", "true");
 
-                    log.info("Configured HikariDataSource with sslmode=require and prepareThreshold=0 for PostgreSQL");
+                    log.info("PostgreSQL datasource configured: URL={}, user={}, passwordConfigured={}",
+                            maskUrl(normalizedUrl),
+                            hikari.getUsername(),
+                            (hikari.getPassword() != null && !hikari.getPassword().isEmpty()));
                 }
             }
         }
         return bean;
+    }
+
+    private String maskUrl(String url) {
+        if (url == null) return "null";
+        return url.replaceAll("://[^/@]+:[^/@]+@", "://***:***@");
     }
 
     private String sanitizeAndExtractCredentials(String url, HikariDataSource hikari) {

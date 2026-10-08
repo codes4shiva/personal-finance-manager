@@ -9,6 +9,7 @@ RUN mvn dependency:go-offline -B
 
 # Build application
 COPY src ./src
+ARG CACHEBUST=2026100902
 RUN mvn clean package -DskipTests
 
 # Runtime stage

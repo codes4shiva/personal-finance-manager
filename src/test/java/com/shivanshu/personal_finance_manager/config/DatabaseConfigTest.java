@@ -24,7 +24,6 @@ class DatabaseConfigTest {
         );
         assertEquals("0", ds.getDataSourceProperties().getProperty("prepareThreshold"));
         assertEquals("require", ds.getDataSourceProperties().getProperty("sslmode"));
-        assertEquals("true", ds.getDataSourceProperties().getProperty("ssl"));
 
         ds.close();
     }
