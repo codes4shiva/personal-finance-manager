@@ -19,7 +19,7 @@ class DatabaseConfigTest {
         databaseConfig.postProcessBeforeInitialization(ds, "dataSource");
 
         assertEquals(
-                "jdbc:postgresql://aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres?sslmode=require",
+                "jdbc:postgresql://aws-0-ap-southeast-1.pooler.supabase.com:5432/postgres?sslmode=require",
                 ds.getJdbcUrl()
         );
         assertEquals("0", ds.getDataSourceProperties().getProperty("prepareThreshold"));
@@ -57,7 +57,7 @@ class DatabaseConfigTest {
         databaseConfig.postProcessBeforeInitialization(ds, "dataSource");
 
         assertEquals(
-                "jdbc:postgresql://aws-0.pooler.supabase.com:6543/postgres?sslmode=require",
+                "jdbc:postgresql://aws-0.pooler.supabase.com:5432/postgres?sslmode=require",
                 ds.getJdbcUrl()
         );
         assertEquals("postgres.dzvouk", ds.getUsername());

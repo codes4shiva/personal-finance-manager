@@ -37,6 +37,12 @@ public class DatabaseConfig implements BeanPostProcessor {
                     // Extract credentials if embedded in URI: jdbc:postgresql://user:password@host...
                     normalizedUrl = sanitizeAndExtractCredentials(normalizedUrl, hikari);
 
+                    // Spring Boot / Hibernate requires Supabase Session pooler (:5432) instead of Transaction pooler (:6543)
+                    if (normalizedUrl.contains("pooler.supabase.com:6543")) {
+                        normalizedUrl = normalizedUrl.replace(":6543", ":5432");
+                        log.info("Remapped Supabase pooler from Transaction mode (:6543) to Session mode (:5432) for Hibernate/Spring compatibility");
+                    }
+
                     // Automatically enforce sslmode=require if missing
                     if (!normalizedUrl.contains("sslmode")) {
                         String separator = normalizedUrl.contains("?") ? "&" : "?";

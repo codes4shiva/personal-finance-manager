@@ -9,7 +9,7 @@ RUN mvn dependency:go-offline -B
 
 # Build application
 COPY src ./src
-ARG CACHEBUST=2026100902
+ARG CACHEBUST=2026100903
 RUN mvn clean package -DskipTests
 
 # Runtime stage
@@ -32,4 +32,4 @@ USER appuser
 
 EXPOSE 8080
 
-ENTRYPOINT ["java", "-jar", "app.jar"]
+ENTRYPOINT ["java", "-Djdk.tls.client.protocols=TLSv1.2,TLSv1.3", "-jar", "app.jar"]
