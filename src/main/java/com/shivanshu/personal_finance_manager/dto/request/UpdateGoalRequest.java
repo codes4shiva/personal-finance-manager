@@ -13,9 +13,13 @@ import java.time.LocalDate;
  * @param targetDate   Optional updated target date (must be in the future)
  */
 public record UpdateGoalRequest(
+        String goalName,
+
         @DecimalMin(value = "0.01", message = "Target amount must be greater than 0")
         BigDecimal targetAmount,
 
-        LocalDate targetDate
+        LocalDate targetDate,
+
+        LocalDate startDate
 ) {
 }

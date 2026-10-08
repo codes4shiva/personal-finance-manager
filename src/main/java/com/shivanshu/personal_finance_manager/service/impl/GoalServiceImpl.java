@@ -52,14 +52,10 @@ public class GoalServiceImpl implements GoalService {
     @Override
     public GoalResponse createGoal(CreateGoalRequest request) {
         LocalDate today = LocalDate.now(clock);
-
-        if (!request.targetDate().isAfter(today)) {
-            throw ApiException.badRequest("targetDate must be in the future");
-        }
-
         LocalDate startDate = request.startDate() != null ? request.startDate() : today;
-        if (startDate.isAfter(request.targetDate())) {
-            throw ApiException.badRequest("startDate cannot be after targetDate");
+
+        if (!request.targetDate().isAfter(startDate)) {
+            throw ApiException.badRequest("targetDate must be after startDate");
         }
 
         UserEntity userEntity = currentUserProvider.getCurrentUserEntity();
@@ -104,10 +100,6 @@ public class GoalServiceImpl implements GoalService {
     public GoalResponse updateGoal(Long id, UpdateGoalRequest request) {
         SavingsGoal goal = findGoalAndCheckOwnership(id);
 
-        if (request.targetAmount() == null && request.targetDate() == null) {
-            throw ApiException.badRequest("At least one field (targetAmount or targetDate) must be provided");
-        }
-
         if (request.targetAmount() != null) {
             if (request.targetAmount().compareTo(BigDecimal.ZERO) <= 0) {
                 throw ApiException.badRequest("Target amount must be greater than 0");
@@ -115,14 +107,24 @@ public class GoalServiceImpl implements GoalService {
             goal.setTargetAmount(MoneyUtils.scale(request.targetAmount()));
         }
 
+        if (request.goalName() != null) {
+            if (request.goalName().isBlank()) {
+                throw ApiException.badRequest("Goal name cannot be blank");
+            }
+            goal.setGoalName(request.goalName().trim());
+        }
+
+        LocalDate newStartDate = request.startDate() != null ? request.startDate() : goal.getStartDate();
+        LocalDate newTargetDate = request.targetDate() != null ? request.targetDate() : goal.getTargetDate();
+
+        if (!newTargetDate.isAfter(newStartDate)) {
+            throw ApiException.badRequest("targetDate must be after startDate");
+        }
+
+        if (request.startDate() != null) {
+            goal.setStartDate(request.startDate());
+        }
         if (request.targetDate() != null) {
-            LocalDate today = LocalDate.now(clock);
-            if (!request.targetDate().isAfter(today)) {
-                throw ApiException.badRequest("targetDate must be in the future");
-            }
-            if (goal.getStartDate().isAfter(request.targetDate())) {
-                throw ApiException.badRequest("targetDate cannot be before startDate");
-            }
             goal.setTargetDate(request.targetDate());
         }
 

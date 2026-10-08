@@ -39,6 +39,64 @@ public interface TransactionRepository
     boolean existsByCategoryId(Long categoryId);
 
     /**
+     * Interface projection for category-grouped aggregation.
+     */
+    interface CategorySummaryProjection {
+        String getCategoryName();
+        CategoryType getCategoryType();
+        BigDecimal getTotalAmount();
+    }
+
+    /**
+     * Aggregates transactions by category for a user within a specified date range.
+     *
+     * @param userId User ID
+     * @param startDate Start date inclusive
+     * @param endDate End date inclusive
+     * @return List of CategorySummaryProjection
+     */
+    @Query("""
+        SELECT t.category.name AS categoryName,
+               t.category.type AS categoryType,
+               SUM(t.amount) AS totalAmount
+        FROM Transaction t
+        WHERE t.userEntity.id = :userId
+          AND t.transactionDate >= :startDate
+          AND t.transactionDate <= :endDate
+        GROUP BY t.category.name, t.category.type
+    """)
+    List<CategorySummaryProjection> sumAmountByCategoryBetweenDates(
+            @Param("userId") Long userId,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate
+    );
+
+    /**
+     * Sums the transaction amounts for a user by category type
+     * within a specified date range.
+     *
+     * @param userId User ID
+     * @param type CategoryType (INCOME or EXPENSE)
+     * @param startDate Minimum transaction date (inclusive)
+     * @param endDate Maximum transaction date (inclusive)
+     * @return Total sum of transactions or null if none
+     */
+    @Query("""
+        SELECT SUM(t.amount)
+        FROM Transaction t
+        WHERE t.userEntity.id = :userId
+          AND t.category.type = :type
+          AND t.transactionDate >= :startDate
+          AND t.transactionDate <= :endDate
+    """)
+    BigDecimal sumAmountByUserIdAndTypeAndDateBetween(
+            @Param("userId") Long userId,
+            @Param("type") CategoryType type,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate
+    );
+
+    /**
      * Sums the transaction amounts for a user by category type
      * on or after a given start date.
      *
@@ -53,7 +111,7 @@ public interface TransactionRepository
         WHERE t.userEntity.id = :userId
           AND t.category.type = :type
           AND t.transactionDate >= :startDate
-    """)
+     """)
     BigDecimal sumAmountByUserIdAndTypeAndDateOnOrAfter(
             @Param("userId") Long userId,
             @Param("type") CategoryType type,

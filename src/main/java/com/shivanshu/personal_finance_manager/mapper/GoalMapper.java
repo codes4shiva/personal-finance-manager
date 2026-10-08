@@ -32,9 +32,8 @@ public class GoalMapper {
         BigDecimal percentage;
         if (target.compareTo(BigDecimal.ZERO) > 0) {
             percentage = scaledProgress
-                    .divide(target, 4, RoundingMode.HALF_UP)
                     .multiply(BigDecimal.valueOf(100))
-                    .setScale(MoneyUtils.SCALE, RoundingMode.HALF_UP);
+                    .divide(target, MoneyUtils.SCALE, RoundingMode.HALF_UP);
             if (percentage.compareTo(BigDecimal.ZERO) < 0) {
                 percentage = MoneyUtils.ZERO;
             }

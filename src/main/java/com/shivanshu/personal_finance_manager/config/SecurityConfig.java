@@ -41,24 +41,17 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
 
                 .authorizeHttpRequests(auth -> auth
-
-                        // Public authentication endpoints
+                        // Public authentication endpoints ONLY
                         .requestMatchers(
                                 HttpMethod.POST,
                                 "/api/auth/register",
                                 "/api/auth/login"
                         ).permitAll()
 
-                        // Public GET endpoints
-                        .requestMatchers(
-                                HttpMethod.GET,
-                                "/api/health"
-                        ).permitAll()
+                        // Everything else under /api/** requires authentication
+                        .requestMatchers("/api/**").authenticated()
 
-                        // Error endpoint
-                        .requestMatchers("/error").permitAll()
-
-                        // Everything else requires authentication
+                        // Any other request requires authentication
                         .anyRequest().authenticated()
                 )
 
@@ -67,7 +60,7 @@ public class SecurityConfig {
                         .accessDeniedHandler(restAuthHandlers)
                 )
 
-                // JWT-based authentication
+                // Stateless JWT authentication
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
@@ -79,11 +72,6 @@ public class SecurityConfig {
                 );
 
         return http.build();
-    }
-
-    @Bean
-    public SecurityContextRepository securityContextRepository() {
-        return new HttpSessionSecurityContextRepository();
     }
 
     @Bean

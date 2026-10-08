@@ -19,6 +19,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -110,11 +111,14 @@ public class TransactionServiceImpl implements TransactionService {
         Transaction transaction = transactionRepository.findByIdAndUserEntityId(id, userId)
                 .orElseThrow(() -> ApiException.notFound("Transaction not found"));
 
-        if (request.date() != null && !request.date().equals(transaction.getTransactionDate())) {
-            throw ApiException.badRequest("Transaction date cannot be changed");
+        if (request.date() != null) {
+            transaction.setTransactionDate(request.date());
         }
 
         if (request.amount() != null) {
+            if (request.amount().compareTo(BigDecimal.ZERO) <= 0) {
+                throw ApiException.badRequest("Amount must be greater than 0");
+            }
             transaction.setAmount(MoneyUtils.scale(request.amount()));
         }
 

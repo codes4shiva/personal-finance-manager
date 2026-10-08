@@ -18,7 +18,7 @@ public final class TransactionSpecifications {
      * Filters transactions belonging to a specific user ID.
      */
     public static Specification<Transaction> forUser(Long userId) {
-        return (root, query, cb) -> cb.equal(root.get("user").get("id"), userId);
+        return (root, query, cb) -> cb.equal(root.get("userEntity").get("id"), userId);
     }
 
     /**

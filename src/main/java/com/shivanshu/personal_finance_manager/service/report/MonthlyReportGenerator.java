@@ -46,26 +46,24 @@ public class MonthlyReportGenerator implements ReportGenerator<MonthlyReportResp
         LocalDate startDate = ym.atDay(1);
         LocalDate endDate = ym.atEndOfMonth();
 
-        List<Transaction> transactions = transactionRepository.findByUserIdAndDateBetween(userId, startDate, endDate);
+        List<TransactionRepository.CategorySummaryProjection> summaries =
+                transactionRepository.sumAmountByCategoryBetweenDates(userId, startDate, endDate);
 
         Map<String, BigDecimal> totalIncome = new LinkedHashMap<>();
         Map<String, BigDecimal> totalExpenses = new LinkedHashMap<>();
+        BigDecimal incomeSum = BigDecimal.ZERO;
+        BigDecimal expenseSum = BigDecimal.ZERO;
 
-        for (Transaction tx : transactions) {
-            String categoryName = tx.getCategory().getName();
-            BigDecimal amount = MoneyUtils.scale(tx.getAmount());
-
-            if (tx.getType() == CategoryType.INCOME) {
-                totalIncome.merge(categoryName, amount, BigDecimal::add);
-            } else if (tx.getType() == CategoryType.EXPENSE) {
-                totalExpenses.merge(categoryName, amount, BigDecimal::add);
+        for (TransactionRepository.CategorySummaryProjection row : summaries) {
+            BigDecimal amount = MoneyUtils.scale(row.getTotalAmount());
+            if (row.getCategoryType() == CategoryType.INCOME) {
+                totalIncome.put(row.getCategoryName(), amount);
+                incomeSum = incomeSum.add(amount);
+            } else if (row.getCategoryType() == CategoryType.EXPENSE) {
+                totalExpenses.put(row.getCategoryName(), amount);
+                expenseSum = expenseSum.add(amount);
             }
         }
-
-        BigDecimal incomeSum = totalIncome.values().stream()
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-        BigDecimal expenseSum = totalExpenses.values().stream()
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         BigDecimal netSavings = MoneyUtils.scale(incomeSum.subtract(expenseSum));
 

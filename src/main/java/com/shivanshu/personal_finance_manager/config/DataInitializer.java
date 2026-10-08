@@ -27,6 +27,7 @@ public class DataInitializer implements CommandLineRunner {
     @Transactional
     public void run(String... args) {
         seedDefaultCategory("Salary", CategoryType.INCOME);
+        seedDefaultCategory("Freelance", CategoryType.INCOME);
         seedDefaultCategory("Food", CategoryType.EXPENSE);
         seedDefaultCategory("Rent", CategoryType.EXPENSE);
         seedDefaultCategory("Transportation", CategoryType.EXPENSE);

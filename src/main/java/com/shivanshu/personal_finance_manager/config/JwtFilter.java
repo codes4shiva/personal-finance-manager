@@ -75,7 +75,7 @@ public class JwtFilter extends OncePerRequestFilter {
 
         String token = resolveToken(request);
 
-        if (token != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+        if (token != null && !token.isBlank() && SecurityContextHolder.getContext().getAuthentication() == null) {
             try {
                 if (jwtService.isAccessToken(token)) {
                     String username = jwtService.extractUserName(token);
@@ -90,7 +90,7 @@ public class JwtFilter extends OncePerRequestFilter {
                         SecurityContextHolder.getContext().setAuthentication(authToken);
                     }
                 }
-            } catch (JwtException | IllegalArgumentException | UsernameNotFoundException ex) {
+            } catch (Exception ex) {
                 // Invalid, expired, or unknown-user token: stay unauthenticated.
                 // Protected endpoints will return 401 via the authentication entry point.
                 SecurityContextHolder.clearContext();
@@ -104,13 +104,19 @@ public class JwtFilter extends OncePerRequestFilter {
         if (request.getCookies() != null) {
             for (Cookie cookie : request.getCookies()) {
                 if (ACCESS_COOKIE.equals(cookie.getName())) {
-                    return cookie.getValue();
+                    String value = cookie.getValue();
+                    if (value != null && !value.isBlank()) {
+                        return value;
+                    }
                 }
             }
         }
         String header = request.getHeader("Authorization");
         if (header != null && header.startsWith("Bearer ")) {
-            return header.substring(7);
+            String token = header.substring(7).trim();
+            if (!token.isBlank()) {
+                return token;
+            }
         }
         return null;
     }
